@@ -1,29 +1,11 @@
-# === Stage 1: Build ===
-FROM maven:3.9.4-eclipse-temurin-17 AS builder
+# Build stage
+FROM maven:3.8.3-openjdk-17 AS build
+COPY . .
+RUN mvn clean install
 
-WORKDIR /app
-
-# Copy only what Maven needs
-COPY pom.xml .
-COPY mvnw .
-COPY .mvn .mvn
-COPY src ./src
-
-# 🔧 Make mvnw executable
-RUN chmod +x mvnw
-
-# Build the project
-RUN ./mvnw clean package -DskipTests
-
-
-# === Stage 2: Run ===
+# Package stage
 FROM eclipse-temurin:17-jdk
-
-WORKDIR /app
-
-# Copy the JAR from the builder stage, not from host
-COPY --from=builder /app/target/*.jar app.jar
-
+COPY --from=build /target/urlShortener-0.0.1-SNAPSHOT.jar app.jar
+# ENV PORT=8080
 EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java","-jar","app.jar"]
